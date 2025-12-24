@@ -70,15 +70,26 @@
             border: 3px solid rgba(255,255,255,0.2); /* Đường viền rõ ràng hơn */
             border-radius: 4px;
             overflow: hidden; 
-            opacity: 1.0; /* LUÔN HIỂN THỊ (Nếu truy cập webcam thành công) */
+            opacity: 1.0; 
+            background-color: rgba(0, 0, 0, 0.5); /* Thêm nền đen mờ */
             pointer-events: none;
             transition: opacity 0.5s;
+            display: block; /* Mặc định là hiển thị */
+            z-index: 11;
         }
         
-        /* Đã bỏ transform: scaleX(-1); ở đây, chuyển sang JS */
+        #webcam-status {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255, 255, 255, 0.7); font-size: 10px; text-align: center;
+            padding: 5px; box-sizing: border-box;
+            z-index: 11;
+        }
+        
         #webcam-preview {
             width: 100%;
             height: 100%;
+            display: none; /* Ẩn canvas cho đến khi video tải thành công */
         }
         
         /* Canvas dùng để vẽ trái tim 2D, ẩn đi */
@@ -132,7 +143,8 @@
 
     <canvas id="heart-canvas-2d" width="300" height="300"></canvas>
     
-    <div id="webcam-wrapper" style="display:none;"> 
+    <div id="webcam-wrapper"> 
+        <div id="webcam-status">Đang chờ cấp quyền Webcam...</div>
         <video id="webcam" autoplay playsinline style="display:none;"></video>
         <canvas id="webcam-preview" width="160" height="120"></canvas> 
     </div>
@@ -187,6 +199,7 @@
         let particleSystem = []; 
         let photoMeshGroup = new THREE.Group();
         let handLandmarker, video, webcamCanvas, webcamCtx;
+        let webcamStatus, webcamWrapper; // Added
         let caneTexture; 
         
         let heartMesh; 
@@ -676,6 +689,8 @@
             video = document.getElementById('webcam');
             webcamCanvas = document.getElementById('webcam-preview');
             webcamCtx = webcamCanvas.getContext('2d');
+            webcamStatus = document.getElementById('webcam-status'); // Get status element
+            webcamWrapper = document.getElementById('webcam-wrapper'); // Get wrapper element
             
             // Lấy kích thước từ HTML/CSS
             const w = webcamCanvas.width;
@@ -693,20 +708,23 @@
                 numHands: 1
             });
             
-            const webcamWrapper = document.getElementById('webcam-wrapper');
-            
             if (navigator.mediaDevices?.getUserMedia) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: { width: w, height: h } });
                     video.srcObject = stream;
-                    video.addEventListener("loadeddata", predictWebcam);
-                    // Bật hiển thị ngay khi truy cập thành công
-                    webcamWrapper.style.display = 'block'; 
-                    webcamWrapper.style.opacity = 1.0; 
+                    video.addEventListener("loadeddata", () => {
+                        predictWebcam();
+                        // SUCCESS: hide status, show canvas/video feed
+                        webcamStatus.style.display = 'none';
+                        webcamCanvas.style.display = 'block';
+                        webcamWrapper.style.opacity = 1.0; 
+                    });
+                    
                 } catch (error) {
+                    // FAILURE: show error message
                     console.warn("Lỗi khi truy cập webcam (MediaPipe sẽ không hoạt động):", error);
-                    // Ẩn nếu không thể truy cập
-                    webcamWrapper.style.display = 'none';
+                    webcamStatus.textContent = "LỖI: Không thể truy cập Webcam. Vui lòng kiểm tra HTTPS/Quyền truy cập.";
+                    webcamWrapper.style.opacity = 0.5; // Giữ khung ở độ mờ nhẹ
                 }
             }
         }
@@ -743,8 +761,10 @@
             // Tính toán kích thước vẽ để fill canvas (cover)
             if (videoRatio > canvasRatio) {
                 drawHeight = w / videoRatio;
+                drawWidth = w;
             } else {
                 drawWidth = h * videoRatio;
+                drawHeight = h;
             }
             
             const xOffset = (w - drawWidth) / 2;
@@ -834,9 +854,8 @@
                     const webcamWrapper = document.getElementById('webcam-wrapper');
                     controls.forEach(c => c.classList.toggle('ui-hidden'));
                     
-                    if (webcamWrapper.style.display === 'block') {
-                         webcamWrapper.style.opacity = webcamWrapper.style.opacity === '1' ? '0' : '1';
-                    }
+                    // Toggle opacity for the webcam wrapper
+                    webcamWrapper.style.opacity = webcamWrapper.style.opacity === '1' ? '0.5' : '1';
                 }
                 
                 // 2. Manual Mode Control
