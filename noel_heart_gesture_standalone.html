@@ -65,21 +65,20 @@
         /* Webcam feedback */
         #webcam-wrapper {
             position: absolute; bottom: 40px; right: 40px;
-            width: 160px; /* Tăng kích thước preview */
+            width: 160px; /* Kích thước preview */
             height: 120px;
             border: 3px solid rgba(255,255,255,0.2); /* Đường viền rõ ràng hơn */
             border-radius: 4px;
             overflow: hidden; 
-            opacity: 0; /* Khởi tạo ẩn */
+            opacity: 1.0; /* LUÔN HIỂN THỊ (Nếu truy cập webcam thành công) */
             pointer-events: none;
             transition: opacity 0.5s;
         }
         
-        /* Hiển thị rõ ràng webcam preview */
+        /* Đã bỏ transform: scaleX(-1); ở đây, chuyển sang JS */
         #webcam-preview {
             width: 100%;
             height: 100%;
-            transform: scaleX(-1); /* Lật ngang ảnh để giống gương */
         }
         
         /* Canvas dùng để vẽ trái tim 2D, ẩn đi */
@@ -133,7 +132,7 @@
 
     <canvas id="heart-canvas-2d" width="300" height="300"></canvas>
     
-    <div id="webcam-wrapper">
+    <div id="webcam-wrapper" style="display:none;"> 
         <video id="webcam" autoplay playsinline style="display:none;"></video>
         <canvas id="webcam-preview" width="160" height="120"></canvas> 
     </div>
@@ -694,16 +693,20 @@
                 numHands: 1
             });
             
+            const webcamWrapper = document.getElementById('webcam-wrapper');
+            
             if (navigator.mediaDevices?.getUserMedia) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: { width: w, height: h } });
                     video.srcObject = stream;
                     video.addEventListener("loadeddata", predictWebcam);
-                    // BẬT OPACITY RÕ RÀNG CHO NGƯỜI DÙNG DỄ QUAN SÁT
-                    document.getElementById('webcam-wrapper').style.opacity = 1.0; 
+                    // Bật hiển thị ngay khi truy cập thành công
+                    webcamWrapper.style.display = 'block'; 
+                    webcamWrapper.style.opacity = 1.0; 
                 } catch (error) {
                     console.warn("Lỗi khi truy cập webcam (MediaPipe sẽ không hoạt động):", error);
-                    document.getElementById('webcam-wrapper').style.display = 'none';
+                    // Ẩn nếu không thể truy cập
+                    webcamWrapper.style.display = 'none';
                 }
             }
         }
@@ -724,14 +727,20 @@
             const w = webcamCanvas.width;
             const h = webcamCanvas.height;
 
-            // 1. Draw video feed onto canvas for preview
             webcamCtx.clearRect(0, 0, w, h);
-            // Kích thước video:
+
+            // Bắt đầu quá trình lật hình ảnh và vẽ (tạo hiệu ứng gương)
+            webcamCtx.save();
+            webcamCtx.scale(-1, 1); // Lật ngang
+            webcamCtx.translate(-w, 0); // Di chuyển context về lại khu vực vẽ
+
+            // 1. Draw video feed onto canvas for preview
             const videoRatio = video.videoWidth / video.videoHeight;
             const canvasRatio = w / h;
             let drawWidth = w;
             let drawHeight = h;
             
+            // Tính toán kích thước vẽ để fill canvas (cover)
             if (videoRatio > canvasRatio) {
                 drawHeight = w / videoRatio;
             } else {
@@ -741,18 +750,13 @@
             const xOffset = (w - drawWidth) / 2;
             const yOffset = (h - drawHeight) / 2;
             
-            // Vẽ hình ảnh video (đã được lật qua CSS scaleX(-1))
+            // Draw the video image
             webcamCtx.drawImage(video, xOffset, yOffset, drawWidth, drawHeight);
 
             if (result.landmarks && result.landmarks.length > 0) {
                 STATE.hand.detected = true;
                 
-                // Cần phải lật lại tọa độ X vì hình ảnh video đã bị lật bằng CSS scaleX(-1)
-                // Hoặc lật trực tiếp trên canvas:
-                webcamCtx.save();
-                webcamCtx.scale(-1, 1);
-                webcamCtx.translate(-w, 0); 
-                
+                // Cử chỉ tay logic
                 const lm = result.landmarks[0];
                 STATE.hand.x = (lm[9].x - 0.5) * 2; 
                 STATE.hand.y = (lm[9].y - 0.5) * 2;
@@ -778,9 +782,8 @@
                     STATE.focusTarget = null;
                 }
                 
-                // Drawing logic:
+                // 2. Drawing Hand Landmarks: (Sử dụng tọa độ trên canvas đã lật)
                 
-                // Connections for drawing hand skeleton
                 const connections = [
                     [4, 3], [3, 2], [2, 1], [1, 0],     // Thumb
                     [8, 7], [7, 6], [6, 5], [5, 0],     // Index
@@ -809,11 +812,11 @@
                     webcamCtx.fill();
                 });
                 
-                webcamCtx.restore(); // Khôi phục trạng thái canvas
-                
             } else {
                 STATE.hand.detected = false;
             }
+            
+            webcamCtx.restore(); // Khôi phục trạng thái canvas (bỏ lật hình)
         }
 
         function setupEvents() {
@@ -828,15 +831,11 @@
                 // 1. Toggle UI logic
                 if (e.key.toLowerCase() === 'h') {
                     const controls = document.querySelectorAll('.ui-controls');
-                    const webcam = document.getElementById('webcam-wrapper');
+                    const webcamWrapper = document.getElementById('webcam-wrapper');
                     controls.forEach(c => c.classList.toggle('ui-hidden'));
                     
-                    const isHidden = webcam.style.opacity === '0' || webcam.style.display === 'none';
-                    if (isHidden) {
-                        webcam.style.display = 'block';
-                        webcam.style.opacity = '1.0';
-                    } else {
-                        webcam.style.opacity = '0';
+                    if (webcamWrapper.style.display === 'block') {
+                         webcamWrapper.style.opacity = webcamWrapper.style.opacity === '1' ? '0' : '1';
                     }
                 }
                 
@@ -894,7 +893,7 @@
             mainGroup.rotation.x = STATE.rotation.x;
             
             // --- LOGIC ĐIỀU KHIỂN SCALE CỦA TRÁI TIM ---
-            const BASE_HEART_SCALE = 3.6; // Đã tăng gấp 3 lần (từ 1.2 lên 3.6)
+            const BASE_HEART_SCALE = 3.6; // Đã tăng gấp 3 lần
 
             if (heartMesh) {
                 let targetScale = 0.0; 
