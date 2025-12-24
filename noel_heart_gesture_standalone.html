@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOEL_V2 - Heart Edition Fixed</title>
+    <title>NOEL_V2 - Heart Edition Final</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000000; font-family: 'Times New Roman', serif; }
         #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
@@ -65,15 +65,21 @@
         /* Webcam feedback */
         #webcam-wrapper {
             position: absolute; bottom: 40px; right: 40px;
-            width: 120px; height: 90px;
-            border: 1px solid rgba(255,255,255,0.1);
-            overflow: hidden; opacity: 0; 
+            width: 160px; /* Tăng kích thước preview */
+            height: 120px;
+            border: 3px solid rgba(255,255,255,0.2); /* Đường viền rõ ràng hơn */
+            border-radius: 4px;
+            overflow: hidden; 
+            opacity: 0; /* Khởi tạo ẩn */
             pointer-events: none;
             transition: opacity 0.5s;
         }
         
-        #webcam-wrapper:hover {
-             opacity: 1 !important;
+        /* Hiển thị rõ ràng webcam preview */
+        #webcam-preview {
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1); /* Lật ngang ảnh để giống gương */
         }
         
         /* Canvas dùng để vẽ trái tim 2D, ẩn đi */
@@ -112,7 +118,13 @@
             Nhấn phím 'H' để ẩn/hiện điều khiển
         </div>
         <div class="hint-text ui-controls" style="margin-top: 20px;">
-            Dùng webcam và cử chỉ tay để điều khiển cây thông:
+            **ĐIỀU KHIỂN BÀN PHÍM:**
+            <br> - Nhấn **1**: Cây thu lại (**TREE**)
+            <br> - Nhấn **2**: Cây bung ra (**SCATTER**)
+            <br> - Nhấn **3**: Phóng to 1 tấm ảnh (**FOCUS**)
+        </div>
+        <div class="hint-text ui-controls" style="margin-top: 20px;">
+            **ĐIỀU KHIỂN CỬ CHỈ TAY (Nếu Webcam hoạt động):**
             <br> - Xòe tay (Open Palm) -> Tán cây bung ra (SCATTER)
             <br> - Nắm tay (Closed Fist) -> Cây thu lại (TREE)
             <br> - Chụm ngón (Pinch) -> Phóng to 1 tấm ảnh (FOCUS)
@@ -123,7 +135,7 @@
     
     <div id="webcam-wrapper">
         <video id="webcam" autoplay playsinline style="display:none;"></video>
-        <canvas id="webcam-preview"></canvas>
+        <canvas id="webcam-preview" width="160" height="120"></canvas> 
     </div>
 
     <script type="module">
@@ -151,6 +163,7 @@
             camera: {
                 z: 50 
             },
+            // THAY CÁC URL ẢNH CỦA BẠN VÀO MẢNG NÀY
             photoUrls: [ 
                 'https://picsum.photos/id/1025/300/300', 
                 'https://picsum.photos/id/1020/300/300',
@@ -177,15 +190,13 @@
         let handLandmarker, video, webcamCanvas, webcamCtx;
         let caneTexture; 
         
-        // --- BIẾN MỚI CHO TRÁI TIM CANVAS ---
         let heartMesh; 
         let heartCanvas;
         let heartCtx;
         let heartTexture;
         let heartGenerator;
         let heartFrameCounter = 0;
-        // ------------------------------------
-
+        
         async function init() {
             initThree();
             setupEnvironment(); 
@@ -193,10 +204,8 @@
             createTextures();
             loadInitialPhotos();
             
-            // KHỞI TẠO TRÁI TIM CANVAS VÀ MESH TRONG THREE.JS
             initHeartCanvas();
             createHeartMesh(); 
-            // --------------------------------------------------
             
             createParticles(); 
             createDust();     
@@ -386,17 +395,17 @@
         const CANVAS_HEIGHT = 300;
         const CANVAS_CENTER_X = CANVAS_WIDTH / 2;
         const CANVAS_CENTER_Y = CANVAS_HEIGHT / 2;
-        const IMAGE_ENLARGE = 1.6; // Điều chỉnh lại tỉ lệ để vừa với 300x300 canvas
+        const IMAGE_ENLARGE = 1.6; 
         const HEART_COLOR = "#f76070";
 
         function heartFunction(t, shrinkRatio = IMAGE_ENLARGE) {
             const x = 16 * Math.pow(Math.sin(t), 3);
             const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-            // Cần dịch chuyển y lên để tim không bị ngược và nằm ở giữa
+            
             const adjustedY = y + 15; 
             return [
                 Math.round(x * shrinkRatio + CANVAS_CENTER_X), 
-                Math.round(adjustedY * shrinkRatio + CANVAS_CENTER_Y - 45) // Dịch chuyển lên đỉnh
+                Math.round(adjustedY * shrinkRatio + CANVAS_CENTER_Y - 45) 
             ];
         }
 
@@ -478,7 +487,7 @@
                 const heartHaloPoint = new Set();
                 for (let i = 0; i < haloNumber; i++) {
                     const t = Math.random() * 2 * Math.PI;
-                    let [x, y] = heartFunction(t, 11.6 * (IMAGE_ENLARGE / 11)); // Điều chỉnh tỉ lệ
+                    let [x, y] = heartFunction(t, 11.6 * (IMAGE_ENLARGE / 11)); 
                     [x, y] = shrink(x, y, haloRadius);
                     const key = `${x},${y}`;
                     if (!heartHaloPoint.has(key)) {
@@ -493,21 +502,21 @@
                 this._points.forEach((pt) => {
                     const [x0, y0] = pt.split(",").map(Number);
                     const [x, y] = Heart.calcPosition(x0, y0, ratio);
-                    const size = Math.floor(Math.random() * 3) + 1; // 1 to 3
+                    const size = Math.floor(Math.random() * 3) + 1; 
                     allPoints.push([x, y, size]);
                 });
 
                 this._edgeDiffusionPoints.forEach((pt) => {
                     const [x0, y0] = pt.split(",").map(Number);
                     const [x, y] = Heart.calcPosition(x0, y0, ratio);
-                    const size = Math.floor(Math.random() * 2) + 1; // 1 to 2
+                    const size = Math.floor(Math.random() * 2) + 1; 
                     allPoints.push([x, y, size]);
                 });
 
                 this._centerDiffusionPoints.forEach((pt) => {
                     const [x0, y0] = pt.split(",").map(Number);
                     const [x, y] = Heart.calcPosition(x0, y0, ratio);
-                    const size = Math.floor(Math.random() * 2) + 1; // 1 to 2
+                    const size = Math.floor(Math.random() * 2) + 1; 
                     allPoints.push([x, y, size]);
                 });
 
@@ -516,7 +525,6 @@
 
             render(ctx, renderFrame) {
                 const framePoints = this.allPoints[renderFrame % this.generateFrame];
-                // Xóa canvas trước khi vẽ frame mới
                 ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT); 
                 
                 framePoints.forEach(([x, y, size]) => {
@@ -531,42 +539,35 @@
             heartCanvas.width = CANVAS_WIDTH;
             heartCanvas.height = CANVAS_HEIGHT;
             heartCtx = heartCanvas.getContext("2d");
-            heartGenerator = new Heart(); // Khởi tạo đối tượng trái tim
+            heartGenerator = new Heart(); 
             
-            // Khởi tạo Texture Three.js từ Canvas
             heartTexture = new THREE.CanvasTexture(heartCanvas);
             heartTexture.colorSpace = THREE.SRGBColorSpace;
         }
 
-        // --- HÀM TẠO VẬT THỂ TRÁI TIM 3D (SỬ DỤNG CANVAS 2D VÀO PLANE) ---
         function createHeartMesh() {
-            // Plane geometry cho trái tim
             const ratio = CANVAS_WIDTH / CANVAS_HEIGHT;
             const planeSize = 4.0; 
             const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize / ratio); 
             
-            // Material sử dụng CanvasTexture
             const heartMat = new THREE.MeshBasicMaterial({
                 map: heartTexture,
                 transparent: true,
-                alphaTest: 0.1, // Giúp loại bỏ nền đen/trong suốt
+                alphaTest: 0.1, 
                 side: THREE.DoubleSide
             });
 
             heartMesh = new THREE.Mesh(planeGeo, heartMat);
             
-            // Đặt vị trí trên đỉnh cây thông (giống ngôi sao cũ)
             heartMesh.position.set(0, CONFIG.particles.treeHeight / 2 + 1.2, 0); 
-            heartMesh.rotation.y = Math.PI; // Xoay 180 độ để nhìn thẳng vào camera khi bắt đầu
+            heartMesh.rotation.y = Math.PI; 
             
-            // Tỷ lệ ban đầu
             heartMesh.scale.set(1.2, 1.2, 1.2); 
             
             mainGroup.add(heartMesh);
         }
         // -----------------------------------------------------------------
 
-        // --- CÁC HÀM TẠO KHÁC GIỮ NGUYÊN ---
         function addPhotoToScene(texture) {
             const frameGeo = new THREE.BoxGeometry(1.4, 1.4, 0.05);
             const frameMat = new THREE.MeshStandardMaterial({ color: CONFIG.colors.champagneGold, metalness: 1.0, roughness: 0.1 });
@@ -676,7 +677,10 @@
             video = document.getElementById('webcam');
             webcamCanvas = document.getElementById('webcam-preview');
             webcamCtx = webcamCanvas.getContext('2d');
-            webcamCanvas.width = 160; webcamCanvas.height = 120;
+            
+            // Lấy kích thước từ HTML/CSS
+            const w = webcamCanvas.width;
+            const h = webcamCanvas.height;
 
             const vision = await FilesetResolver.forVisionTasks(
                 "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
@@ -692,10 +696,11 @@
             
             if (navigator.mediaDevices?.getUserMedia) {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: w, height: h } });
                     video.srcObject = stream;
                     video.addEventListener("loadeddata", predictWebcam);
-                    document.getElementById('webcam-wrapper').style.opacity = 0.1;
+                    // BẬT OPACITY RÕ RÀNG CHO NGƯỜI DÙNG DỄ QUAN SÁT
+                    document.getElementById('webcam-wrapper').style.opacity = 1.0; 
                 } catch (error) {
                     console.warn("Lỗi khi truy cập webcam (MediaPipe sẽ không hoạt động):", error);
                     document.getElementById('webcam-wrapper').style.display = 'none';
@@ -716,8 +721,38 @@
         }
 
         function processGestures(result) {
+            const w = webcamCanvas.width;
+            const h = webcamCanvas.height;
+
+            // 1. Draw video feed onto canvas for preview
+            webcamCtx.clearRect(0, 0, w, h);
+            // Kích thước video:
+            const videoRatio = video.videoWidth / video.videoHeight;
+            const canvasRatio = w / h;
+            let drawWidth = w;
+            let drawHeight = h;
+            
+            if (videoRatio > canvasRatio) {
+                drawHeight = w / videoRatio;
+            } else {
+                drawWidth = h * videoRatio;
+            }
+            
+            const xOffset = (w - drawWidth) / 2;
+            const yOffset = (h - drawHeight) / 2;
+            
+            // Vẽ hình ảnh video (đã được lật qua CSS scaleX(-1))
+            webcamCtx.drawImage(video, xOffset, yOffset, drawWidth, drawHeight);
+
             if (result.landmarks && result.landmarks.length > 0) {
                 STATE.hand.detected = true;
+                
+                // Cần phải lật lại tọa độ X vì hình ảnh video đã bị lật bằng CSS scaleX(-1)
+                // Hoặc lật trực tiếp trên canvas:
+                webcamCtx.save();
+                webcamCtx.scale(-1, 1);
+                webcamCtx.translate(-w, 0); 
+                
                 const lm = result.landmarks[0];
                 STATE.hand.x = (lm[9].x - 0.5) * 2; 
                 STATE.hand.y = (lm[9].y - 0.5) * 2;
@@ -742,6 +777,40 @@
                     STATE.mode = 'SCATTER';
                     STATE.focusTarget = null;
                 }
+                
+                // Drawing logic:
+                
+                // Connections for drawing hand skeleton
+                const connections = [
+                    [4, 3], [3, 2], [2, 1], [1, 0],     // Thumb
+                    [8, 7], [7, 6], [6, 5], [5, 0],     // Index
+                    [12, 11], [11, 10], [10, 9], [9, 5], // Middle
+                    [16, 15], [15, 14], [14, 13], [13, 9], // Ring
+                    [20, 19], [19, 18], [18, 17], [17, 13], // Pinky
+                    [0, 17] // Palm base
+                ];
+
+                webcamCtx.strokeStyle = '#00ff00';
+                webcamCtx.lineWidth = 2;
+                connections.forEach(([start, end]) => {
+                    webcamCtx.beginPath();
+                    webcamCtx.moveTo(lm[start].x * w, lm[start].y * h);
+                    webcamCtx.lineTo(lm[end].x * w, lm[end].y * h);
+                    webcamCtx.stroke();
+                });
+                
+                // Draw points (21 landmarks)
+                webcamCtx.fillStyle = '#ff0000'; // Red color for points
+                lm.forEach(point => {
+                    const x = point.x * w;
+                    const y = point.y * h;
+                    webcamCtx.beginPath();
+                    webcamCtx.arc(x, y, 3, 0, 2 * Math.PI); // Draw point as circle
+                    webcamCtx.fill();
+                });
+                
+                webcamCtx.restore(); // Khôi phục trạng thái canvas
+                
             } else {
                 STATE.hand.detected = false;
             }
@@ -756,6 +825,7 @@
             });
             
             window.addEventListener('keydown', (e) => {
+                // 1. Toggle UI logic
                 if (e.key.toLowerCase() === 'h') {
                     const controls = document.querySelectorAll('.ui-controls');
                     const webcam = document.getElementById('webcam-wrapper');
@@ -764,10 +834,30 @@
                     const isHidden = webcam.style.opacity === '0' || webcam.style.display === 'none';
                     if (isHidden) {
                         webcam.style.display = 'block';
-                        webcam.style.opacity = '0.1';
+                        webcam.style.opacity = '1.0';
                     } else {
                         webcam.style.opacity = '0';
                     }
+                }
+                
+                // 2. Manual Mode Control
+                switch (e.key) {
+                    case '1':
+                        STATE.mode = 'TREE';
+                        STATE.focusTarget = null;
+                        console.log('Mode set to TREE (Cây thu lại)');
+                        break;
+                    case '2':
+                        STATE.mode = 'SCATTER';
+                        STATE.focusTarget = null;
+                        console.log('Mode set to SCATTER (Cây bung ra)');
+                        break;
+                    case '3':
+                        STATE.mode = 'FOCUS';
+                        const photos = particleSystem.filter(p => p.type === 'PHOTO');
+                        if (photos.length) STATE.focusTarget = photos[Math.floor(Math.random()*photos.length)].mesh;
+                        console.log('Mode set to FOCUS (Phóng to ảnh)');
+                        break;
                 }
             });
         }
@@ -804,18 +894,18 @@
             mainGroup.rotation.x = STATE.rotation.x;
             
             // --- LOGIC ĐIỀU KHIỂN SCALE CỦA TRÁI TIM ---
+            const BASE_HEART_SCALE = 3.6; // Đã tăng gấp 3 lần (từ 1.2 lên 3.6)
+
             if (heartMesh) {
-                let targetScale = 1.0; 
+                let targetScale = 0.0; 
                 if (STATE.mode === 'SCATTER') {
                     targetScale = 0.0; // Thu nhỏ/Biến mất khi cây bung ra
                 } else if (STATE.mode === 'FOCUS' || STATE.mode === 'TREE') {
-                    targetScale = 1.2; // Phóng to/Hiển thị khi cây thu lại/Focus
+                    targetScale = BASE_HEART_SCALE; // Phóng to gấp 3
                 }
                 
-                // Trái tim phóng to/thu nhỏ đồng bộ với cây
                 heartMesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 4 * dt);
                 
-                // Trái tim luôn xoay nhẹ để nhìn nổi bật
                 heartMesh.rotation.y += 0.5 * dt; 
             }
             // ---------------------------------------------
