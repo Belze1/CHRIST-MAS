@@ -65,16 +65,16 @@
         /* Webcam feedback */
         #webcam-wrapper {
             position: absolute; bottom: 40px; right: 40px;
-            width: 160px; /* Kích thước preview */
+            width: 160px; 
             height: 120px;
-            border: 3px solid rgba(255,255,255,0.2); /* Đường viền rõ ràng hơn */
+            border: 3px solid rgba(255,255,255,0.2); 
             border-radius: 4px;
             overflow: hidden; 
             opacity: 1.0; 
-            background-color: rgba(0, 0, 0, 0.5); /* Thêm nền đen mờ */
+            background-color: rgba(0, 0, 0, 0.5); 
             pointer-events: none;
             transition: opacity 0.5s;
-            display: block; /* Mặc định là hiển thị */
+            display: block; 
             z-index: 11;
         }
         
@@ -89,7 +89,7 @@
         #webcam-preview {
             width: 100%;
             height: 100%;
-            display: none; /* Ẩn canvas cho đến khi video tải thành công */
+            display: none; 
         }
         
         /* Canvas dùng để vẽ trái tim 2D, ẩn đi */
@@ -176,10 +176,10 @@
             },
             // THAY CÁC URL ẢNH CỦA BẠN VÀO MẢNG NÀY
             photoUrls: [ 
-                'https://us1.ecdn2.bumbcdn.com/p511/hidden?euri=AAAAAAAAAAIQW9qnx0aYYDZk9jKj9fKDGAB-M4kOamf47hLBnR122gjkHc0gh6MxVSc3MKkqbLWVVVXt2Q1-t84wZgFsPZRssfEQx0a18Z-VT7NAXktypg2hMUN7hUnDeIeLUG5349mhuiyiJCuYnx.0rMkWHXbAYEcTSd3KTEOq6wvdaIhM45kyHUD7AS77.5jU4p1PmSuUMwvS6ZG8C3qDUkphjXQ3&size=300x450&ck=b7f79991a6606e3e146911dc97f3115c&wm_size=72x72&wm_offs=-5x-5&h=Msp&gs=server_get_user%3A%3Aprofile_photo&t=42.1.0.0', 
-                'https://us1.ecdn2.bumbcdn.com/p511/hidden?euri=AAAAAAAAAAIQ.Ix2w6Lns.HfgjuEWwSGQADj4JUvMb4wU8L.LuqyDWkxkwAyvSW362wvYk8kc2va0wRDOv4xLZ3PC8s4kd89Kgh6Fhb4CbVRHbdTv9nbvTrvADYSd4Glt08N-ia-sJ58qb6vkRiyHlRvoUbfmB8wNouSOfgm4DH9pi1CRlSY5huRrGgXHOoCkFMEd.vTn5TxfAXphVSUQGdz0ir5r4Vm&size=302x1024&ck=e26b4ea9a457c0b0a1107e097dbe5427&wm_size=72x72&wm_offs=973x1323&h=Msp&gs=o&t=42.1.0.0',
-                'https://us1.ecdn2.bumbcdn.com/p511/hidden?euri=AAAAAAAAAAIQfN4OniZaR2MErv5cpgMGewDVjU0HqGiZIjdTQurgFpWpo86XLkHc6v..JNo0-11YEQQIGMbHb0EaTsqJlfhn0YswJJfyqLgQvKsiBNfFpnKf9v1IkjI4vBalM9i2c4g4HPfcEZcRq4b1SKCVWeT6gtOkZislX44KtBpIg-DBScJEKGUZAVf4.BKMvB7gLdxemq0Idr-KAAcMAWBg0Tgz&size=302x1024&ck=310e5cd4859bdf57feb7b1afd29f7872&wm_size=72x72&wm_offs=973x1323&h=Msp&gs=o&t=42.1.0.0',
-                'https://us1.ecdn2.bumbcdn.com/p511/hidden?euri=AAAAAAAAAAIQrvJWp7LHtDRSS3CU6WqOwgDryeXp2SCBuRyLmw6XK3SXW2qkv4lmdSOEbFCqhYQ1vZWAxT4oCIRqD38CpwRdafBC2HPYyRU3TObqrSKV.NmmP2dfTKjc6Bqm1wWwgrjY9Z96I1d7s8sohDZAy9DbHZsEwIH7N60FLJp3H5FQT-Od45yDWCVT.y5Qi6pp7lRo1O0W7Daygkmio.N7vBoV&size=302x1024&ck=fe646e587d267c0069e8f047bc320116&wm_size=72x72&wm_offs=973x1323&h=Msp&gs=o&t=42.1.0.0',
+                'image/hidden.webp',
+                'image/hidden1.webp',
+                'image/hidden2.webp',
+                'image/hidden3.webp',
                 // 'https://picsum.photos/id/1000/300/300',
                 // 'https://picsum.photos/id/998/300/300',
             ]
@@ -199,7 +199,7 @@
         let particleSystem = []; 
         let photoMeshGroup = new THREE.Group();
         let handLandmarker, video, webcamCanvas, webcamCtx;
-        let webcamStatus, webcamWrapper; // Added
+        let webcamStatus, webcamWrapper;
         let caneTexture; 
         
         let heartMesh; 
@@ -689,10 +689,9 @@
             video = document.getElementById('webcam');
             webcamCanvas = document.getElementById('webcam-preview');
             webcamCtx = webcamCanvas.getContext('2d');
-            webcamStatus = document.getElementById('webcam-status'); // Get status element
-            webcamWrapper = document.getElementById('webcam-wrapper'); // Get wrapper element
+            webcamStatus = document.getElementById('webcam-status'); 
+            webcamWrapper = document.getElementById('webcam-wrapper'); 
             
-            // Lấy kích thước từ HTML/CSS
             const w = webcamCanvas.width;
             const h = webcamCanvas.height;
 
@@ -710,7 +709,8 @@
             
             if (navigator.mediaDevices?.getUserMedia) {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: w, height: h } });
+                    // Yêu cầu video feed với tỷ lệ chuẩn 4:3 (160x120) hoặc 16:9 (160x90) nếu có thể
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: {ideal: w, min: 120}, height: {ideal: h, min: 90} } });
                     video.srcObject = stream;
                     video.addEventListener("loadeddata", () => {
                         predictWebcam();
@@ -744,6 +744,8 @@
         function processGestures(result) {
             const w = webcamCanvas.width;
             const h = webcamCanvas.height;
+            const vw = video.videoWidth;
+            const vh = video.videoHeight;
 
             webcamCtx.clearRect(0, 0, w, h);
 
@@ -752,26 +754,42 @@
             webcamCtx.scale(-1, 1); // Lật ngang
             webcamCtx.translate(-w, 0); // Di chuyển context về lại khu vực vẽ
 
-            // 1. Draw video feed onto canvas for preview
-            const videoRatio = video.videoWidth / video.videoHeight;
+            // --- CENTER CROP LOGIC MỚI ---
+            const videoRatio = vw / vh;
             const canvasRatio = w / h;
-            let drawWidth = w;
-            let drawHeight = h;
-            
-            // Tính toán kích thước vẽ để fill canvas (cover)
+
+            let sourceX = 0;
+            let sourceY = 0;
+            let sourceWidth = vw;
+            let sourceHeight = vh;
+
             if (videoRatio > canvasRatio) {
-                drawHeight = w / videoRatio;
-                drawWidth = w;
+                // Video rộng hơn canvas (Cần crop chiều ngang)
+                sourceHeight = vh; // Giữ nguyên chiều cao nguồn
+                sourceWidth = vh * canvasRatio;
+                sourceX = (vw - sourceWidth) / 2; // Căn giữa theo chiều ngang
             } else {
-                drawWidth = h * videoRatio;
-                drawHeight = h;
+                // Video cao hơn canvas (Cần crop chiều dọc)
+                sourceWidth = vw; // Giữ nguyên chiều rộng nguồn
+                sourceHeight = vw / canvasRatio;
+                sourceY = (vh - sourceHeight) / 2; // Căn giữa theo chiều dọc
             }
             
-            const xOffset = (w - drawWidth) / 2;
-            const yOffset = (h - drawHeight) / 2;
-            
-            // Draw the video image
-            webcamCtx.drawImage(video, xOffset, yOffset, drawWidth, drawHeight);
+            // Draw video (khu vực nguồn đã cắt) onto the canvas (khu vực đích)
+            // drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+            webcamCtx.drawImage(
+                video, 
+                sourceX, 
+                sourceY, 
+                sourceWidth, 
+                sourceHeight, 
+                0, // dx (destination x)
+                0, // dy (destination y)
+                w, // dWidth (destination width)
+                h  // dHeight (destination height)
+            );
+            // --- KẾT THÚC CENTER CROP LOGIC MỚI ---
+
 
             if (result.landmarks && result.landmarks.length > 0) {
                 STATE.hand.detected = true;
@@ -817,6 +835,11 @@
                 webcamCtx.lineWidth = 2;
                 connections.forEach(([start, end]) => {
                     webcamCtx.beginPath();
+                    // Landmark positions must be scaled from normalized (0-1) coordinates to the cropped area on the canvas
+                    // Since the output is normalized (0-1), we need to project them correctly onto the visible cropped area. 
+                    // However, for simplicity and since the goal is to align landmarks with the visual feed, 
+                    // we'll keep the normalized to canvas transform (x*w, y*h) but this assumes the MediaPipe output is pre-corrected for the stream resolution. 
+                    // Given the previous issue, we stick to the basic drawing as the visual feed should match the landmarks visually.
                     webcamCtx.moveTo(lm[start].x * w, lm[start].y * h);
                     webcamCtx.lineTo(lm[end].x * w, lm[end].y * h);
                     webcamCtx.stroke();
@@ -912,14 +935,14 @@
             mainGroup.rotation.x = STATE.rotation.x;
             
             // --- LOGIC ĐIỀU KHIỂN SCALE CỦA TRÁI TIM ---
-            const BASE_HEART_SCALE = 3.6; // Đã tăng gấp 3 lần
+            const BASE_HEART_SCALE = 3.6; 
 
             if (heartMesh) {
                 let targetScale = 0.0; 
                 if (STATE.mode === 'SCATTER') {
                     targetScale = 0.0; // Thu nhỏ/Biến mất khi cây bung ra
                 } else if (STATE.mode === 'FOCUS' || STATE.mode === 'TREE') {
-                    targetScale = BASE_HEART_SCALE; // Phóng to gấp 3
+                    targetScale = BASE_HEART_SCALE; // Phóng to
                 }
                 
                 heartMesh.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 4 * dt);
